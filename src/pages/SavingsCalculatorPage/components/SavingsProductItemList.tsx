@@ -1,13 +1,30 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { getSavingsProductsQueryOptions } from '../api/getSavingsProducts';
+import { getSavingsProductsQueryOptions, SavingsProduct } from '../api/getSavingsProducts';
 import { Assets, colors, ListRow } from 'tosslib';
+import { useMemo } from 'react';
 
-export function SavingProductItemList() {
+interface SavingProductItemListProps {
+  filterPredicates?: Array<(product: SavingsProduct) => boolean>;
+  onClick?: (product: SavingsProduct) => void;
+}
+
+export function SavingProductItemList({ filterPredicates = [], onClick }: SavingProductItemListProps) {
   const { data: savingsProducts } = useSuspenseQuery(getSavingsProductsQueryOptions());
+
+  const filteredProducts = useMemo(() => {
+    if (filterPredicates.length === 0) {
+      return savingsProducts;
+    }
+    return savingsProducts.filter(product => filterPredicates.every(predicate => predicate(product)));
+  }, [savingsProducts, filterPredicates]);
+
+  if (filteredProducts.length === 0) {
+    return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건에 맞는 적금 상품이 없어요." />} />;
+  }
 
   return (
     <>
-      {savingsProducts.map(savingProduct => {
+      {filteredProducts.map(savingProduct => {
         return (
           <ListRow
             key={savingProduct.id}
@@ -23,7 +40,7 @@ export function SavingProductItemList() {
               />
             }
             right={<Assets.Icon name="icon-check-circle-green" />}
-            onClick={() => {}}
+            onClick={() => onClick?.(savingProduct)}
           />
         );
       })}

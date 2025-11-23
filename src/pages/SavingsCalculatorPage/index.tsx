@@ -1,19 +1,37 @@
-import { Border, NavigationBar, SelectBottomSheet, Spacing, Tab, TextField } from 'tosslib';
 import { ErrorBoundary, Suspense } from '@suspensive/react';
+import { useState } from 'react';
+import { Border, NavigationBar, SelectBottomSheet, Spacing, Tab, TextField } from 'tosslib';
 import { SavingProductItemList } from './components/SavingsProductItemList';
+import { type SavingsProduct } from './api/getSavingsProducts';
 
 export function SavingsCalculatorPage() {
+  const [targetAmount, setTargetAmount] = useState('');
+  const [monthlyAmount, setMonthlyAmount] = useState('');
+  const [term, setTerm] = useState(12);
+
   return (
     <>
       <NavigationBar title="적금 계산기" />
 
       <Spacing size={16} />
 
-      <TextField label="목표 금액" placeholder="목표 금액을 입력하세요" suffix="원" />
+      <TextField
+        label="목표 금액"
+        placeholder="목표 금액을 입력하세요"
+        suffix="원"
+        value={targetAmount}
+        onChange={e => setTargetAmount(e.target.value)}
+      />
       <Spacing size={16} />
-      <TextField label="월 납입액" placeholder="희망 월 납입액을 입력하세요" suffix="원" />
+      <TextField
+        label="월 납입액"
+        placeholder="희망 월 납입액을 입력하세요"
+        suffix="원"
+        value={monthlyAmount}
+        onChange={e => setMonthlyAmount(e.target.value)}
+      />
       <Spacing size={16} />
-      <SelectBottomSheet label="저축 기간" title="저축 기간을 선택해주세요" value={12} onChange={() => {}}>
+      <SelectBottomSheet label="저축 기간" title="저축 기간을 선택해주세요" value={term} onChange={setTerm}>
         <SelectBottomSheet.Option value={6}>6개월</SelectBottomSheet.Option>
         <SelectBottomSheet.Option value={12}>12개월</SelectBottomSheet.Option>
         <SelectBottomSheet.Option value={24}>24개월</SelectBottomSheet.Option>
@@ -34,7 +52,10 @@ export function SavingsCalculatorPage() {
 
       <ErrorBoundary fallback={<div>적금 상품을 불러오는 중 오류가 발생했어요.</div>}>
         <Suspense fallback={<div>적금 상품을 불러오는 중이에요...</div>}>
-          <SavingProductItemList />
+          {/* TODO: 납입액 입력 안했을 때 전체 데이터 보여주도록 조건 처리하기 */}
+          <SavingProductItemList
+            filterPredicates={[isMonthlyAmountInRange(Number(monthlyAmount)), isTermMatching(term)]}
+          />
         </Suspense>
       </ErrorBoundary>
 
@@ -117,4 +138,14 @@ export function SavingsCalculatorPage() {
       {/* <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} /> */}
     </>
   );
+}
+
+function isMonthlyAmountInRange(
+  monthlyAmount: number
+): (product: Pick<SavingsProduct, 'minMonthlyAmount' | 'maxMonthlyAmount'>) => boolean {
+  return product => monthlyAmount >= product.minMonthlyAmount && monthlyAmount <= product.maxMonthlyAmount;
+}
+
+function isTermMatching(term: number): (product: Pick<SavingsProduct, 'availableTerms'>) => boolean {
+  return product => term === product.availableTerms;
 }
