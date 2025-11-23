@@ -3,17 +3,13 @@ import { getSavingsProductsQueryOptions, SavingsProduct } from '../api/getSaving
 import { Assets, colors, ListRow } from 'tosslib';
 import { useMemo } from 'react';
 
-interface SavingProductItemListProps {
+interface ProductListProps {
   filterPredicates?: Array<(product: SavingsProduct) => boolean>;
   selectedProduct?: SavingsProduct | null;
   onClick?: (product: SavingsProduct) => void;
 }
 
-export function SavingProductItemList({
-  filterPredicates = [],
-  selectedProduct = null,
-  onClick,
-}: SavingProductItemListProps) {
+export function ProductList({ filterPredicates = [], selectedProduct = null, onClick }: ProductListProps) {
   const { data: savingsProducts } = useSuspenseQuery(getSavingsProductsQueryOptions());
 
   const filteredProducts = useMemo(() => {
