@@ -1,20 +1,19 @@
 import { ErrorBoundary, Suspense } from '@suspensive/react';
 import { useState } from 'react';
-import { Border, ListRow, NavigationBar, SelectBottomSheet, Spacing, Tab, TextField } from 'tosslib';
+import { Assets, Border, ListRow, NavigationBar, SelectBottomSheet, Spacing, Tab, TextField } from 'tosslib';
 import { type SavingsProduct } from './api/getSavingsProducts';
 import { CalculationResult } from './components/CalculationResult';
 import { ProductList } from './components/ProductList';
+import { isMonthlyAmountInRange, isTermMatching } from './utils/productFilters';
 
-interface SearchFormData {
-  targetAmount: string;
-  monthlyAmount: string;
+export interface SearchFormData {
+  targetAmount: number;
+  monthlyAmount: number;
   term: number;
 }
 
 export function SavingsCalculatorPage() {
   const [searchFormData, setSearchFormData] = useState<SearchFormData>({
-    targetAmount: '',
-    monthlyAmount: '',
     term: 12,
   });
 
@@ -73,13 +72,15 @@ export function SavingsCalculatorPage() {
             return (
               <ErrorBoundary fallback={<div>적금 상품을 불러오는 중 오류가 발생했어요.</div>}>
                 <Suspense fallback={<div>적금 상품을 불러오는 중이에요...</div>}>
-                  {/* TODO: 납입액 입력 안했을 때 전체 데이터 보여주도록 조건 처리하기 */}
                   <ProductList
-                    filterPredicates={[
-                      isMonthlyAmountInRange(Number(searchFormData.monthlyAmount)),
-                      isTermMatching(searchFormData.term),
-                    ]}
-                    selectedProduct={selectedProduct}
+                    filter={products =>
+                      products
+                        .filter(isMonthlyAmountInRange(Number(searchFormData.monthlyAmount)))
+                        .filter(isTermMatching(searchFormData.term))
+                    }
+                    renderRight={product =>
+                      selectedProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
+                    }
                     onClick={product => setSelectedProduct(product)}
                   />
                 </Suspense>
@@ -89,21 +90,11 @@ export function SavingsCalculatorPage() {
             if (!selectedProduct) {
               return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} />;
             }
-            return <CalculationResult />;
+            return <CalculationResult searchFormData={searchFormData} savingsProduct={selectedProduct} />;
         }
       })()}
 
       <Spacing size={8} />
     </>
   );
-}
-
-function isMonthlyAmountInRange(
-  monthlyAmount: number
-): (product: Pick<SavingsProduct, 'minMonthlyAmount' | 'maxMonthlyAmount'>) => boolean {
-  return product => monthlyAmount >= product.minMonthlyAmount && monthlyAmount <= product.maxMonthlyAmount;
-}
-
-function isTermMatching(term: number): (product: Pick<SavingsProduct, 'availableTerms'>) => boolean {
-  return product => term === product.availableTerms;
 }

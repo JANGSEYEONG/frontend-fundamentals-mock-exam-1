@@ -1,6 +1,18 @@
-import { Border, colors, ListHeader, ListRow, Spacing } from 'tosslib';
+import { Assets, Border, colors, ListHeader, ListRow, Spacing } from 'tosslib';
+import { SavingsProduct } from '../api/getSavingsProducts';
+import { formatAmount } from '../utils/formatAmount';
+import { ProductList } from './ProductList';
+import { SearchFormData } from '..';
+import { isMonthlyAmountInRange, isTermMatching } from '../utils/productFilters';
 
-export function CalculationResult() {
+interface CalculationResultProps {
+  searchFormData: Required<SearchFormData>;
+  savingsProduct: SavingsProduct;
+}
+export function CalculationResult({ searchFormData, savingsProduct }: CalculationResultProps) {
+  const 예상_수익_금액 = searchFormData.monthlyAmount * searchFormData.term * (1 + savingsProduct.annualRate * 0.5);
+  const 목표_금액과의_차이 = searchFormData.targetAmount - 예상_수익_금액;
+  const 추천_월_납입_금액 = searchFormData.targetAmount / (searchFormData.term * (1 + savingsProduct.annualRate * 0.5));
   return (
     <>
       <ListRow
@@ -9,7 +21,7 @@ export function CalculationResult() {
             type="2RowTypeA"
             top="예상 수익 금액"
             topProps={{ color: colors.grey600 }}
-            bottom={`1,000,000원`}
+            bottom={`${formatAmount(예상_수익_금액)}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -20,7 +32,7 @@ export function CalculationResult() {
             type="2RowTypeA"
             top="목표 금액과의 차이"
             topProps={{ color: colors.grey600 }}
-            bottom={`-500,000원`}
+            bottom={`${formatAmount(목표_금액과의_차이)}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -31,7 +43,7 @@ export function CalculationResult() {
             type="2RowTypeA"
             top="추천 월 납입 금액"
             topProps={{ color: colors.grey600 }}
-            bottom={`100,000원`}
+            bottom={`${formatAmount(Math.round(추천_월_납입_금액 / 1000) * 1000)}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -44,33 +56,17 @@ export function CalculationResult() {
       <ListHeader title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>} />
       <Spacing size={12} />
 
-      <ListRow
-        contents={
-          <ListRow.Texts
-            type="3RowTypeA"
-            top={'기본 정기적금'}
-            topProps={{ fontSize: 16, fontWeight: 'bold', color: colors.grey900 }}
-            middle={`연 이자율: 3.2%`}
-            middleProps={{ fontSize: 14, color: colors.blue600, fontWeight: 'medium' }}
-            bottom={`100,000원 ~ 500,000원 | 12개월`}
-            bottomProps={{ fontSize: 13, color: colors.grey600 }}
-          />
+      <ProductList
+        filter={products =>
+          products
+            .filter(isMonthlyAmountInRange(Number(searchFormData.monthlyAmount)))
+            .filter(isTermMatching(searchFormData.term))
+            .sort((a, b) => b.annualRate - a.annualRate)
+            .slice(0, 2)
         }
-        onClick={() => {}}
-      />
-      <ListRow
-        contents={
-          <ListRow.Texts
-            type="3RowTypeA"
-            top={'고급 정기적금'}
-            topProps={{ fontSize: 16, fontWeight: 'bold', color: colors.grey900 }}
-            middle={`연 이자율: 2.8%`}
-            middleProps={{ fontSize: 14, color: colors.blue600, fontWeight: 'medium' }}
-            bottom={`50,000원 ~ 1,000,000원 | 24개월`}
-            bottomProps={{ fontSize: 13, color: colors.grey600 }}
-          />
+        renderRight={product =>
+          savingsProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
         }
-        onClick={() => {}}
       />
 
       <Spacing size={40} />

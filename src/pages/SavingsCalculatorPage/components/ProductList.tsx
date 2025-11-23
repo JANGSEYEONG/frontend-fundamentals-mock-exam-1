@@ -1,23 +1,18 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { colors, ListRow } from 'tosslib';
 import { getSavingsProductsQueryOptions, SavingsProduct } from '../api/getSavingsProducts';
-import { Assets, colors, ListRow } from 'tosslib';
-import { useMemo } from 'react';
+import { formatAmount } from '../utils/formatAmount';
 
 interface ProductListProps {
-  filterPredicates?: Array<(product: SavingsProduct) => boolean>;
-  selectedProduct?: SavingsProduct | null;
+  filter?: (products: SavingsProduct[]) => SavingsProduct[];
   onClick?: (product: SavingsProduct) => void;
+  renderRight?: (product: SavingsProduct) => React.ReactNode;
 }
 
-export function ProductList({ filterPredicates = [], selectedProduct = null, onClick }: ProductListProps) {
+export function ProductList({ filter, onClick, renderRight }: ProductListProps) {
   const { data: savingsProducts } = useSuspenseQuery(getSavingsProductsQueryOptions());
 
-  const filteredProducts = useMemo(() => {
-    if (filterPredicates.length === 0) {
-      return savingsProducts;
-    }
-    return savingsProducts.filter(product => filterPredicates.every(predicate => predicate(product)));
-  }, [savingsProducts, filterPredicates]);
+  const filteredProducts = filter ? filter(savingsProducts) : savingsProducts;
 
   if (filteredProducts.length === 0) {
     return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건에 맞는 적금 상품이 없어요." />} />;
@@ -40,7 +35,7 @@ export function ProductList({ filterPredicates = [], selectedProduct = null, onC
                 bottomProps={{ fontSize: 13, color: colors.grey600 }}
               />
             }
-            right={selectedProduct?.id === savingProduct.id ? <Assets.Icon name="icon-check-circle-green" /> : null}
+            right={renderRight?.(savingProduct)}
             onClick={() => onClick?.(savingProduct)}
           />
         );
@@ -48,14 +43,3 @@ export function ProductList({ filterPredicates = [], selectedProduct = null, onC
     </>
   );
 }
-
-const formatAmount = (
-  value: number,
-  options: {
-    locales?: Intl.LocalesArgument;
-  } = {
-    locales: 'ko-KR',
-  }
-) => {
-  return value.toLocaleString(options.locales);
-};
