@@ -9,6 +9,8 @@ export function SavingsCalculatorPage() {
   const [monthlyAmount, setMonthlyAmount] = useState('');
   const [term, setTerm] = useState(12);
 
+  const [selectedProduct, setSelectedProduct] = useState<SavingsProduct | null>(null);
+
   return (
     <>
       <NavigationBar title="적금 계산기" />
@@ -55,6 +57,8 @@ export function SavingsCalculatorPage() {
           {/* TODO: 납입액 입력 안했을 때 전체 데이터 보여주도록 조건 처리하기 */}
           <SavingProductItemList
             filterPredicates={[isMonthlyAmountInRange(Number(monthlyAmount)), isTermMatching(term)]}
+            selectedProduct={selectedProduct}
+            onClick={product => setSelectedProduct(product)}
           />
         </Suspense>
       </ErrorBoundary>

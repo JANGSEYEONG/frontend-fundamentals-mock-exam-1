@@ -5,10 +5,15 @@ import { useMemo } from 'react';
 
 interface SavingProductItemListProps {
   filterPredicates?: Array<(product: SavingsProduct) => boolean>;
+  selectedProduct?: SavingsProduct | null;
   onClick?: (product: SavingsProduct) => void;
 }
 
-export function SavingProductItemList({ filterPredicates = [], onClick }: SavingProductItemListProps) {
+export function SavingProductItemList({
+  filterPredicates = [],
+  selectedProduct = null,
+  onClick,
+}: SavingProductItemListProps) {
   const { data: savingsProducts } = useSuspenseQuery(getSavingsProductsQueryOptions());
 
   const filteredProducts = useMemo(() => {
@@ -39,7 +44,7 @@ export function SavingProductItemList({ filterPredicates = [], onClick }: Saving
                 bottomProps={{ fontSize: 13, color: colors.grey600 }}
               />
             }
-            right={<Assets.Icon name="icon-check-circle-green" />}
+            right={selectedProduct?.id === savingProduct.id ? <Assets.Icon name="icon-check-circle-green" /> : null}
             onClick={() => onClick?.(savingProduct)}
           />
         );
