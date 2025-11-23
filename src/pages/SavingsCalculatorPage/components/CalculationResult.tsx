@@ -1,9 +1,9 @@
 import { Border, colors, ListRow, Spacing } from 'tosslib';
-import { CalculatedCondition } from '../types';
+import { CalculatorCondition } from '../types';
 import { formatAmount } from '../utils/formatAmount';
 
 interface CalculationResultProps {
-  condition: CalculatedCondition;
+  condition: CalculatorCondition;
   extra?: React.ReactNode;
 }
 
@@ -69,10 +69,10 @@ interface CompleteCondition {
   targetAmount: number;
   monthlyAmount: number;
   term: number;
-  savingsProduct: NonNullable<CalculatedCondition['savingsProduct']>;
+  savingsProduct: NonNullable<CalculatorCondition['savingsProduct']>;
 }
 
-function checkCompleteCondition(condition: CalculatedCondition): condition is CompleteCondition {
+function checkCompleteCondition(condition: CalculatorCondition): condition is CompleteCondition {
   return Boolean(condition.targetAmount && condition.monthlyAmount && condition.term && condition.savingsProduct);
 }
 

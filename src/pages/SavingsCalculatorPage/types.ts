@@ -1,4 +1,4 @@
-export interface CalculatedCondition {
+export interface CalculatorCondition {
   targetAmount?: number;
   monthlyAmount?: number;
   term?: number;

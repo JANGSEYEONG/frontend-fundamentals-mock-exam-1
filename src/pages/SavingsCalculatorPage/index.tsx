@@ -4,12 +4,12 @@ import { Assets, Border, ListHeader, NavigationBar, Spacing, Tab } from 'tosslib
 import { CalculationResult } from './components/CalculationResult';
 import { ConditionForm } from './components/ConditionForm';
 import { ProductList } from './components/ProductList';
-import { CalculatedCondition, SavingsProduct } from './types';
+import { CalculatorCondition, SavingsProduct } from './types';
 
 export function SavingsCalculatorPage() {
   const [selectedTab, setSelectedTab] = useState('products');
 
-  const [calculatedCondition, setCalculatedCondition] = useState<CalculatedCondition>({
+  const [calculatedCondition, setCalculatedCondition] = useState<CalculatorCondition>({
     targetAmount: undefined,
     monthlyAmount: undefined,
     term: undefined,
