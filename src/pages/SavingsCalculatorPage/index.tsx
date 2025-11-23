@@ -1,20 +1,19 @@
 import { Suspense } from '@suspensive/react';
 import { useState } from 'react';
-import { Assets, Border, ListRow, NavigationBar, Spacing, Tab } from 'tosslib';
-import { type SavingsProduct } from './api/getSavingsProducts';
+import { Assets, Border, ListHeader, NavigationBar, Spacing, Tab } from 'tosslib';
 import { CalculationResult } from './components/CalculationResult';
-import { ConditionForm, ConditionFormData } from './components/ConditionForm';
+import { ConditionForm } from './components/ConditionForm';
 import { ProductList } from './components/ProductList';
-import { isMonthlyAmountInRange, isTermMatching } from './utils/productFilters';
+import { CalculatedCondition, SavingsProduct } from './types';
 
 export function SavingsCalculatorPage() {
   const [selectedTab, setSelectedTab] = useState('products');
-  const [selectedProduct, setSelectedProduct] = useState<SavingsProduct | null>(null);
 
-  const [condition, setCondition] = useState<ConditionFormData>({
+  const [calculatedCondition, setCalculatedCondition] = useState<CalculatedCondition>({
     targetAmount: undefined,
     monthlyAmount: undefined,
-    term: 12,
+    term: undefined,
+    savingsProduct: undefined,
   });
 
   return (
@@ -23,7 +22,9 @@ export function SavingsCalculatorPage() {
 
       <Spacing size={16} />
 
-      <ConditionForm values={condition} onValuesChange={data => setCondition(data)} />
+      <ConditionForm
+        onFieldChange={({ name, value }) => setCalculatedCondition(prev => ({ ...prev, [name]: value }))}
+      />
 
       <Spacing size={24} />
       <Border height={16} />
@@ -41,39 +42,51 @@ export function SavingsCalculatorPage() {
       {(() => {
         switch (selectedTab) {
           case 'products':
-            if (condition.monthlyAmount == null || condition.term == null) {
-              return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건을 모두 입력해주세요." />} />;
-            }
             return (
               <Suspense fallback={<ProductList.Fallback />}>
                 <ProductList
                   filter={products =>
                     products
-                      .filter(isMonthlyAmountInRange(Number(condition.monthlyAmount)))
-                      .filter(isTermMatching(Number(condition.term)))
+                      .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
+                      .filter(getAvailableTermsFilter(calculatedCondition.term))
                   }
                   renderRight={product =>
-                    selectedProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
+                    calculatedCondition.savingsProduct?.id === product.id ? (
+                      <Assets.Icon name="icon-check-circle-green" />
+                    ) : null
                   }
-                  onClick={product => setSelectedProduct(product)}
+                  onClick={product => setCalculatedCondition(prev => ({ ...prev, savingsProduct: product }))}
                 />
               </Suspense>
             );
           case 'results':
-            if (!selectedProduct) {
-              return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} />;
-            }
-            if (!condition.monthlyAmount || !condition.term || !condition.targetAmount) {
-              return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건을 모두 입력해주세요." />} />;
-            }
             return (
               <CalculationResult
-                condition={{
-                  monthlyAmount: Number(condition.monthlyAmount),
-                  term: Number(condition.term),
-                  targetAmount: Number(condition.targetAmount),
-                }}
-                selectedProduct={selectedProduct}
+                condition={calculatedCondition}
+                extra={
+                  <>
+                    <ListHeader
+                      title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
+                    />
+                    <Spacing size={12} />
+                    <Suspense fallback={<ProductList.Fallback />}>
+                      <ProductList
+                        filter={products =>
+                          products
+                            .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
+                            .filter(getAvailableTermsFilter(calculatedCondition.term))
+                            .sort((a, b) => b.annualRate - a.annualRate)
+                            .slice(0, 2)
+                        }
+                        renderRight={product =>
+                          calculatedCondition.savingsProduct?.id === product.id ? (
+                            <Assets.Icon name="icon-check-circle-green" />
+                          ) : null
+                        }
+                      />
+                    </Suspense>
+                  </>
+                }
               />
             );
         }
@@ -82,4 +95,24 @@ export function SavingsCalculatorPage() {
       <Spacing size={8} />
     </>
   );
+}
+
+function getMonthlyAmountFilter(
+  monthlyAmount?: number
+): (product: Pick<SavingsProduct, 'minMonthlyAmount' | 'maxMonthlyAmount'>) => boolean {
+  return product => {
+    if (monthlyAmount === undefined) {
+      return true;
+    }
+    return monthlyAmount >= product.minMonthlyAmount && monthlyAmount <= product.maxMonthlyAmount;
+  };
+}
+
+function getAvailableTermsFilter(term?: number): (product: Pick<SavingsProduct, 'availableTerms'>) => boolean {
+  return product => {
+    if (term === undefined) {
+      return true;
+    }
+    return term === product.availableTerms;
+  };
 }

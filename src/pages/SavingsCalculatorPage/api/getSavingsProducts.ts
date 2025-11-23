@@ -1,17 +1,11 @@
 import { queryOptions } from '@tanstack/react-query';
 import { http } from 'tosslib';
+import { SavingsProduct } from '../types';
 
-export interface SavingsProduct {
-  id: string;
-  name: string;
-  annualRate: number;
-  minMonthlyAmount: number;
-  maxMonthlyAmount: number;
-  availableTerms: number;
-}
+type GetSavingsProductsResponse = SavingsProduct[];
 
 const getSavingsProducts = async () => {
-  return await http.get<SavingsProduct[]>('/api/savings-products');
+  return await http.get<GetSavingsProductsResponse>('/api/savings-products');
 };
 
 export const getSavingsProductsQueryOptions = () =>

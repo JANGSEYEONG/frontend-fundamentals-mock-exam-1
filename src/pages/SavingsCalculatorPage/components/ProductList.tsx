@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { colors, ListRow } from 'tosslib';
-import { getSavingsProductsQueryOptions, SavingsProduct } from '../api/getSavingsProducts';
+import { getSavingsProductsQueryOptions } from '../api/getSavingsProducts';
 import { formatAmount } from '../utils/formatAmount';
+import { SavingsProduct } from '../types';
 
 interface ProductListProps {
   filter?: (products: SavingsProduct[]) => SavingsProduct[];

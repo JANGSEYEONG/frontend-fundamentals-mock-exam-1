@@ -1,22 +1,20 @@
-import { Suspense } from '@suspensive/react';
-import { Assets, Border, colors, ListHeader, ListRow, Spacing } from 'tosslib';
-import { SavingsProduct } from '../api/getSavingsProducts';
+import { Border, colors, ListRow, Spacing } from 'tosslib';
+import { CalculatedCondition } from '../types';
 import { formatAmount } from '../utils/formatAmount';
-import { isMonthlyAmountInRange, isTermMatching } from '../utils/productFilters';
-import { ProductList } from './ProductList';
-
-interface Condition {
-  targetAmount: number;
-  monthlyAmount: number;
-  term: number;
-}
 
 interface CalculationResultProps {
-  condition: Condition;
-  selectedProduct: SavingsProduct;
+  condition: CalculatedCondition;
+  extra?: React.ReactNode;
 }
 
-export function CalculationResult({ condition, selectedProduct }: CalculationResultProps) {
+export function CalculationResult({ condition, extra }: CalculationResultProps) {
+  if (!checkCompleteCondition(condition)) {
+    if (!condition.savingsProduct) {
+      return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} />;
+    }
+    return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건을 모두 입력해주세요." />} />;
+  }
+
   return (
     <>
       <ListRow
@@ -25,7 +23,7 @@ export function CalculationResult({ condition, selectedProduct }: CalculationRes
             type="2RowTypeA"
             top="예상 수익 금액"
             topProps={{ color: colors.grey600 }}
-            bottom={`${formatAmount(getExpectedAmount(condition, selectedProduct))}원`}
+            bottom={`${formatAmount(getExpectedAmount(condition))}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -36,7 +34,7 @@ export function CalculationResult({ condition, selectedProduct }: CalculationRes
             type="2RowTypeA"
             top="목표 금액과의 차이"
             topProps={{ color: colors.grey600 }}
-            bottom={`${formatAmount(getDifferenceFromTarget(condition, selectedProduct))}원`}
+            bottom={`${formatAmount(getDifferenceFromTarget(condition))}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -47,49 +45,47 @@ export function CalculationResult({ condition, selectedProduct }: CalculationRes
             type="2RowTypeA"
             top="추천 월 납입 금액"
             topProps={{ color: colors.grey600 }}
-            bottom={`${formatAmount(roundToThousand(getRecommendedMonthlyAmount(condition, selectedProduct)))}원`}
+            bottom={`${formatAmount(roundToThousand(getRecommendedMonthlyAmount(condition)))}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
       />
+      {extra && (
+        <>
+          <Spacing size={8} />
+          <Border height={16} />
+          <Spacing size={8} />
 
-      <Spacing size={8} />
-      <Border height={16} />
-      <Spacing size={8} />
+          {extra}
 
-      <ListHeader title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>} />
-      <Spacing size={12} />
-
-      <Suspense fallback={<ProductList.Fallback />}>
-        <ProductList
-          filter={products =>
-            products
-              .filter(isMonthlyAmountInRange(condition.monthlyAmount))
-              .filter(isTermMatching(condition.term))
-              .sort((a, b) => b.annualRate - a.annualRate)
-              .slice(0, 2)
-          }
-          renderRight={product =>
-            selectedProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
-          }
-        />
-      </Suspense>
-
-      <Spacing size={40} />
+          <Spacing size={40} />
+        </>
+      )}
     </>
   );
 }
 
-function getExpectedAmount(condition: Condition, savingsProduct: SavingsProduct) {
-  return condition.monthlyAmount * condition.term * (1 + savingsProduct.annualRate * 0.5);
+interface CompleteCondition {
+  targetAmount: number;
+  monthlyAmount: number;
+  term: number;
+  savingsProduct: NonNullable<CalculatedCondition['savingsProduct']>;
 }
 
-function getDifferenceFromTarget(condition: Condition, savingsProduct: SavingsProduct) {
-  return condition.targetAmount - getExpectedAmount(condition, savingsProduct);
+function checkCompleteCondition(condition: CalculatedCondition): condition is CompleteCondition {
+  return Boolean(condition.targetAmount && condition.monthlyAmount && condition.term && condition.savingsProduct);
 }
 
-function getRecommendedMonthlyAmount(condition: Condition, savingsProduct: SavingsProduct) {
-  return condition.targetAmount / (condition.term * (1 + savingsProduct.annualRate * 0.5));
+function getExpectedAmount(condition: CompleteCondition) {
+  return condition.monthlyAmount * condition.term * (1 + condition.savingsProduct.annualRate * 0.5);
+}
+
+function getDifferenceFromTarget(condition: CompleteCondition) {
+  return condition.targetAmount - getExpectedAmount(condition);
+}
+
+function getRecommendedMonthlyAmount(condition: CompleteCondition) {
+  return condition.targetAmount / (condition.term * (1 + condition.savingsProduct.annualRate * 0.5));
 }
 
 function roundToThousand(value: number) {
