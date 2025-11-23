@@ -2,17 +2,18 @@ import { Assets, Border, colors, ListHeader, ListRow, Spacing } from 'tosslib';
 import { SavingsProduct } from '../api/getSavingsProducts';
 import { formatAmount } from '../utils/formatAmount';
 import { ProductList } from './ProductList';
-import { SearchFormData } from '..';
 import { isMonthlyAmountInRange, isTermMatching } from '../utils/productFilters';
+import { ConditionFormData } from './ConditionForm';
+import { Suspense } from '@suspensive/react';
 
 interface CalculationResultProps {
-  searchFormData: Required<SearchFormData>;
+  condition: Required<ConditionFormData>;
   savingsProduct: SavingsProduct;
 }
-export function CalculationResult({ searchFormData, savingsProduct }: CalculationResultProps) {
-  const 예상_수익_금액 = searchFormData.monthlyAmount * searchFormData.term * (1 + savingsProduct.annualRate * 0.5);
-  const 목표_금액과의_차이 = searchFormData.targetAmount - 예상_수익_금액;
-  const 추천_월_납입_금액 = searchFormData.targetAmount / (searchFormData.term * (1 + savingsProduct.annualRate * 0.5));
+export function CalculationResult({ condition, savingsProduct }: CalculationResultProps) {
+  const 예상_수익_금액 = condition.monthlyAmount * condition.term * (1 + savingsProduct.annualRate * 0.5);
+  const 목표_금액과의_차이 = condition.targetAmount - 예상_수익_금액;
+  const 추천_월_납입_금액 = condition.targetAmount / (condition.term * (1 + savingsProduct.annualRate * 0.5));
   return (
     <>
       <ListRow
@@ -56,18 +57,20 @@ export function CalculationResult({ searchFormData, savingsProduct }: Calculatio
       <ListHeader title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>} />
       <Spacing size={12} />
 
-      <ProductList
-        filter={products =>
-          products
-            .filter(isMonthlyAmountInRange(Number(searchFormData.monthlyAmount)))
-            .filter(isTermMatching(searchFormData.term))
-            .sort((a, b) => b.annualRate - a.annualRate)
-            .slice(0, 2)
-        }
-        renderRight={product =>
-          savingsProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
-        }
-      />
+      <Suspense fallback={<ProductList.Fallback />}>
+        <ProductList
+          filter={products =>
+            products
+              .filter(isMonthlyAmountInRange(condition.monthlyAmount))
+              .filter(isTermMatching(condition.term))
+              .sort((a, b) => b.annualRate - a.annualRate)
+              .slice(0, 2)
+          }
+          renderRight={product =>
+            savingsProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
+          }
+        />
+      </Suspense>
 
       <Spacing size={40} />
     </>

@@ -43,3 +43,7 @@ export function ProductList({ filter, onClick, renderRight }: ProductListProps) 
     </>
   );
 }
+
+ProductList.Fallback = function ProductListFallback() {
+  return <div>적금 상품을 불러오는 중이에요...</div>;
+};
