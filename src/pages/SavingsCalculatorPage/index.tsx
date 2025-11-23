@@ -73,7 +73,7 @@ export function SavingsCalculatorPage() {
                   term: Number(condition.term),
                   targetAmount: Number(condition.targetAmount),
                 }}
-                savingsProduct={selectedProduct}
+                selectedProduct={selectedProduct}
               />
             );
         }

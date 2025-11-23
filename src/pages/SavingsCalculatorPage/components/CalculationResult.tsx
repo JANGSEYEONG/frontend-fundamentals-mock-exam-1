@@ -1,19 +1,22 @@
+import { Suspense } from '@suspensive/react';
 import { Assets, Border, colors, ListHeader, ListRow, Spacing } from 'tosslib';
 import { SavingsProduct } from '../api/getSavingsProducts';
 import { formatAmount } from '../utils/formatAmount';
-import { ProductList } from './ProductList';
 import { isMonthlyAmountInRange, isTermMatching } from '../utils/productFilters';
-import { ConditionFormData } from './ConditionForm';
-import { Suspense } from '@suspensive/react';
+import { ProductList } from './ProductList';
+
+interface Condition {
+  targetAmount: number;
+  monthlyAmount: number;
+  term: number;
+}
 
 interface CalculationResultProps {
-  condition: Required<ConditionFormData>;
-  savingsProduct: SavingsProduct;
+  condition: Condition;
+  selectedProduct: SavingsProduct;
 }
-export function CalculationResult({ condition, savingsProduct }: CalculationResultProps) {
-  const 예상_수익_금액 = condition.monthlyAmount * condition.term * (1 + savingsProduct.annualRate * 0.5);
-  const 목표_금액과의_차이 = condition.targetAmount - 예상_수익_금액;
-  const 추천_월_납입_금액 = condition.targetAmount / (condition.term * (1 + savingsProduct.annualRate * 0.5));
+
+export function CalculationResult({ condition, selectedProduct }: CalculationResultProps) {
   return (
     <>
       <ListRow
@@ -22,7 +25,7 @@ export function CalculationResult({ condition, savingsProduct }: CalculationResu
             type="2RowTypeA"
             top="예상 수익 금액"
             topProps={{ color: colors.grey600 }}
-            bottom={`${formatAmount(예상_수익_금액)}원`}
+            bottom={`${formatAmount(getExpectedAmount(condition, selectedProduct))}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -33,7 +36,7 @@ export function CalculationResult({ condition, savingsProduct }: CalculationResu
             type="2RowTypeA"
             top="목표 금액과의 차이"
             topProps={{ color: colors.grey600 }}
-            bottom={`${formatAmount(목표_금액과의_차이)}원`}
+            bottom={`${formatAmount(getDifferenceFromTarget(condition, selectedProduct))}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -44,7 +47,7 @@ export function CalculationResult({ condition, savingsProduct }: CalculationResu
             type="2RowTypeA"
             top="추천 월 납입 금액"
             topProps={{ color: colors.grey600 }}
-            bottom={`${formatAmount(Math.round(추천_월_납입_금액 / 1000) * 1000)}원`}
+            bottom={`${formatAmount(roundToThousand(getRecommendedMonthlyAmount(condition, selectedProduct)))}원`}
             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
           />
         }
@@ -67,7 +70,7 @@ export function CalculationResult({ condition, savingsProduct }: CalculationResu
               .slice(0, 2)
           }
           renderRight={product =>
-            savingsProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
+            selectedProduct?.id === product.id ? <Assets.Icon name="icon-check-circle-green" /> : null
           }
         />
       </Suspense>
@@ -75,4 +78,20 @@ export function CalculationResult({ condition, savingsProduct }: CalculationResu
       <Spacing size={40} />
     </>
   );
+}
+
+function getExpectedAmount(condition: Condition, savingsProduct: SavingsProduct) {
+  return condition.monthlyAmount * condition.term * (1 + savingsProduct.annualRate * 0.5);
+}
+
+function getDifferenceFromTarget(condition: Condition, savingsProduct: SavingsProduct) {
+  return condition.targetAmount - getExpectedAmount(condition, savingsProduct);
+}
+
+function getRecommendedMonthlyAmount(condition: Condition, savingsProduct: SavingsProduct) {
+  return condition.targetAmount / (condition.term * (1 + savingsProduct.annualRate * 0.5));
+}
+
+function roundToThousand(value: number) {
+  return Math.round(value / 1000) * 1000;
 }
