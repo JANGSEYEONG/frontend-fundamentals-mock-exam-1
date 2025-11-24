@@ -1,6 +1,6 @@
+import { FormattedField } from 'components/FormattedField';
 import { forwardRef, useState } from 'react';
-import { SelectBottomSheet, Spacing, TextField } from 'tosslib';
-import { formatAmount } from '../utils/formatAmount';
+import { SelectBottomSheet, Spacing } from 'tosslib';
 
 interface ConditionFormData {
   targetAmount?: number;
@@ -26,10 +26,10 @@ export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof Condit
         label="목표 금액"
         placeholder="목표 금액을 입력하세요"
         suffix="원"
-        onChange={amount =>
+        onChange={value =>
           onFieldChange({
             name: 'targetAmount',
-            value: amount,
+            value,
           })
         }
       />
@@ -38,10 +38,10 @@ export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof Condit
         label="월 납입액"
         placeholder="희망 월 납입액을 입력하세요"
         suffix="원"
-        onChange={amount =>
+        onChange={value =>
           onFieldChange({
             name: 'monthlyAmount',
-            value: amount,
+            value,
           })
         }
       />
@@ -66,30 +66,25 @@ export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof Condit
   );
 }
 
-interface AmountFieldProps extends Omit<React.ComponentProps<typeof TextField>, 'value' | 'onChange'> {
-  onChange?: (amount: number | undefined) => void;
+interface AmountFieldProps extends Omit<React.ComponentProps<typeof FormattedField>, 'onChange' | 'formatter'> {
+  onChange?: (value: number | undefined) => void;
 }
 
 const AmountField = forwardRef<HTMLInputElement, AmountFieldProps>(({ onChange, ...props }, ref) => {
-  const [displayAmount, setDisplayAmount] = useState<string>('');
-
   return (
-    <TextField
+    <FormattedField
       ref={ref}
-      value={displayAmount}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-        const inputValue = e.target.value;
-
-        const displayValue = inputValue.replace(/[^\d]/g, '').replace(/^0+/, '');
-
-        if (displayValue === '') {
-          setDisplayAmount('');
+      formatter={value =>
+        value
+          .replace(/[^\d]/g, '')
+          .replace(/^0+/, '')
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+      }
+      onChange={value => {
+        if (!value) {
           onChange?.(undefined);
-          return;
         } else {
-          const numericValue = Number(displayValue);
-          setDisplayAmount(formatAmount(numericValue));
-          onChange?.(numericValue);
+          onChange?.(Number(value.replace(/[^\d]/g, '')));
         }
       }}
       {...props}
@@ -97,4 +92,4 @@ const AmountField = forwardRef<HTMLInputElement, AmountFieldProps>(({ onChange, 
   );
 });
 
-AmountField.displayName = 'NumberField';
+AmountField.displayName = 'AmountField';
