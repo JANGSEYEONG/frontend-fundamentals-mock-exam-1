@@ -5,12 +5,12 @@ import { getSavingsProductsQueryOptions } from '../api/getSavingsProducts';
 import { SavingsProduct } from '../types';
 import { formatAmount } from '../utils/formatAmount';
 
-interface ProductListProps {
+interface SavingsProductListProps {
   select?: (data: SavingsProduct[]) => SavingsProduct[];
   renderRight?: (savingsProdudct: SavingsProduct) => React.ReactNode;
   onClick?: (savingsProdudct: SavingsProduct) => void;
 }
-export function ProductList({ select, renderRight, onClick }: ProductListProps) {
+export function SavingsProductList({ select, renderRight, onClick }: SavingsProductListProps) {
   return (
     <ErrorBoundary
       shouldCatch={isHttpError}

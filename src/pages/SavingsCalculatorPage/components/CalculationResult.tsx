@@ -1,15 +1,16 @@
+import { isNil, isNotNil } from 'es-toolkit';
 import { Border, colors, ListRow, Spacing } from 'tosslib';
-import { CalculatorCondition } from '../types';
+import { Condition } from '../types';
 import { formatAmount } from '../utils/formatAmount';
 
 interface CalculationResultProps {
-  condition: CalculatorCondition;
+  condition: Condition;
   extra?: React.ReactNode;
 }
 
 export function CalculationResult({ condition, extra }: CalculationResultProps) {
-  if (!checkCompleteCondition(condition)) {
-    if (!condition.savingsProduct) {
+  if (!checkRequiredCondition(condition)) {
+    if (isNil(condition.savingsProduct)) {
       return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} />;
     }
     return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건을 모두 입력해주세요." />} />;
@@ -65,26 +66,24 @@ export function CalculationResult({ condition, extra }: CalculationResultProps) 
   );
 }
 
-interface CompleteCondition {
-  targetAmount: number;
-  monthlyAmount: number;
-  term: number;
-  savingsProduct: NonNullable<CalculatorCondition['savingsProduct']>;
+function checkRequiredCondition(condition: Condition): condition is Required<Condition> {
+  return (
+    isNotNil(condition.targetAmount) &&
+    isNotNil(condition.monthlyAmount) &&
+    isNotNil(condition.term) &&
+    isNotNil(condition.savingsProduct)
+  );
 }
 
-function checkCompleteCondition(condition: CalculatorCondition): condition is CompleteCondition {
-  return Boolean(condition.targetAmount && condition.monthlyAmount && condition.term && condition.savingsProduct);
-}
-
-function getExpectedAmount(condition: CompleteCondition) {
+function getExpectedAmount(condition: Required<Condition>) {
   return condition.monthlyAmount * condition.term * (1 + condition.savingsProduct.annualRate * 0.5);
 }
 
-function getDifferenceFromTarget(condition: CompleteCondition) {
+function getDifferenceFromTarget(condition: Required<Condition>) {
   return condition.targetAmount - getExpectedAmount(condition);
 }
 
-function getRecommendedMonthlyAmount(condition: CompleteCondition) {
+function getRecommendedMonthlyAmount(condition: Required<Condition>) {
   return condition.targetAmount / (condition.term * (1 + condition.savingsProduct.annualRate * 0.5));
 }
 

@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Assets, Border, ListHeader, NavigationBar, Spacing, Tab } from 'tosslib';
 import { CalculationResult } from './components/CalculationResult';
 import { ConditionForm } from './components/ConditionForm';
-import { ProductList } from './components/ProductList';
-import { CalculatorCondition, SavingsProduct } from './types';
+import { SavingsProductList } from './components/SavingsProductList';
+import { Condition, SavingsProduct } from './types';
 
 export function SavingsCalculatorPage() {
   const [selectedTab, setSelectedTab] = useState('products');
 
-  const [calculatedCondition, setCalculatedCondition] = useState<CalculatorCondition>({
+  const [condition, setCondition] = useState<Condition>({
     targetAmount: undefined,
     monthlyAmount: undefined,
     term: undefined,
@@ -21,9 +21,7 @@ export function SavingsCalculatorPage() {
 
       <Spacing size={16} />
 
-      <ConditionForm
-        onFieldChange={({ name, value }) => setCalculatedCondition(prev => ({ ...prev, [name]: value }))}
-      />
+      <ConditionForm onFieldChange={({ name, value }) => setCondition(prev => ({ ...prev, [name]: value }))} />
 
       <Spacing size={24} />
       <Border height={16} />
@@ -42,40 +40,40 @@ export function SavingsCalculatorPage() {
         switch (selectedTab) {
           case 'products':
             return (
-              <ProductList
+              <SavingsProductList
                 select={savingsProducts =>
                   savingsProducts
-                    .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
-                    .filter(getAvailableTermsFilter(calculatedCondition.term))
+                    .filter(getMonthlyAmountFilter(condition.monthlyAmount))
+                    .filter(getAvailableTermsFilter(condition.term))
                 }
                 renderRight={savingsProdudct =>
-                  savingsProdudct.id === calculatedCondition.savingsProduct?.id ? (
+                  savingsProdudct.id === condition.savingsProduct?.id ? (
                     <Assets.Icon name="icon-check-circle-green" />
                   ) : null
                 }
-                onClick={product => setCalculatedCondition(prev => ({ ...prev, savingsProduct: product }))}
+                onClick={product => setCondition(prev => ({ ...prev, savingsProduct: product }))}
               />
             );
           case 'results':
             return (
               <CalculationResult
-                condition={calculatedCondition}
+                condition={condition}
                 extra={
                   <>
                     <ListHeader
                       title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
                     />
                     <Spacing size={12} />
-                    <ProductList
+                    <SavingsProductList
                       select={savingsProducts =>
                         savingsProducts
-                          .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
-                          .filter(getAvailableTermsFilter(calculatedCondition.term))
+                          .filter(getMonthlyAmountFilter(condition.monthlyAmount))
+                          .filter(getAvailableTermsFilter(condition.term))
                           .sort((a, b) => b.annualRate - a.annualRate)
                           .slice(0, 2)
                       }
                       renderRight={savingsProdudct =>
-                        savingsProdudct.id === calculatedCondition.savingsProduct?.id ? (
+                        savingsProdudct.id === condition.savingsProduct?.id ? (
                           <Assets.Icon name="icon-check-circle-green" />
                         ) : null
                       }
@@ -84,6 +82,8 @@ export function SavingsCalculatorPage() {
                 }
               />
             );
+          default:
+            throw new Error('The tab does not exist');
         }
       })()}
 
@@ -92,22 +92,20 @@ export function SavingsCalculatorPage() {
   );
 }
 
-function getMonthlyAmountFilter(
-  monthlyAmount?: number
-): (product: Pick<SavingsProduct, 'minMonthlyAmount' | 'maxMonthlyAmount'>) => boolean {
-  return product => {
+function getMonthlyAmountFilter(monthlyAmount?: number): (savingsProduct: SavingsProduct) => boolean {
+  return savingsProduct => {
     if (monthlyAmount === undefined) {
       return true;
     }
-    return monthlyAmount >= product.minMonthlyAmount && monthlyAmount <= product.maxMonthlyAmount;
+    return monthlyAmount >= savingsProduct.minMonthlyAmount && monthlyAmount <= savingsProduct.maxMonthlyAmount;
   };
 }
 
-function getAvailableTermsFilter(term?: number): (product: Pick<SavingsProduct, 'availableTerms'>) => boolean {
-  return product => {
+function getAvailableTermsFilter(term?: number): (savingsProduct: SavingsProduct) => boolean {
+  return savingsProduct => {
     if (term === undefined) {
       return true;
     }
-    return term === product.availableTerms;
+    return term === savingsProduct.availableTerms;
   };
 }
