@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { SelectBottomSheet, Spacing, TextField } from 'tosslib';
+import { formatAmount } from '../utils/formatAmount';
 
 interface ConditionFormData {
   targetAmount?: number;
@@ -21,26 +22,26 @@ export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof Condit
 
   return (
     <>
-      <TextField
+      <AmountField
         label="목표 금액"
         placeholder="목표 금액을 입력하세요"
         suffix="원"
-        onChange={e =>
+        onChange={amount =>
           onFieldChange({
             name: 'targetAmount',
-            value: Number(e.target.value),
+            value: amount,
           })
         }
       />
       <Spacing size={16} />
-      <TextField
+      <AmountField
         label="월 납입액"
         placeholder="희망 월 납입액을 입력하세요"
         suffix="원"
-        onChange={e =>
+        onChange={amount =>
           onFieldChange({
             name: 'monthlyAmount',
-            value: Number(e.target.value),
+            value: amount,
           })
         }
       />
@@ -64,3 +65,36 @@ export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof Condit
     </>
   );
 }
+
+interface AmountFieldProps extends Omit<React.ComponentProps<typeof TextField>, 'value' | 'onChange'> {
+  onChange?: (amount: number | undefined) => void;
+}
+
+const AmountField = forwardRef<HTMLInputElement, AmountFieldProps>(({ onChange, ...props }, ref) => {
+  const [displayAmount, setDisplayAmount] = useState<string>('');
+
+  return (
+    <TextField
+      ref={ref}
+      value={displayAmount}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value;
+
+        const displayValue = inputValue.replace(/[^\d]/g, '').replace(/^0+/, '');
+
+        if (displayValue === '') {
+          setDisplayAmount('');
+          onChange?.(undefined);
+          return;
+        } else {
+          const numericValue = Number(displayValue);
+          setDisplayAmount(formatAmount(numericValue));
+          onChange?.(numericValue);
+        }
+      }}
+      {...props}
+    />
+  );
+});
+
+AmountField.displayName = 'NumberField';
