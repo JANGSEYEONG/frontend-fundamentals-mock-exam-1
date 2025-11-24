@@ -1,62 +1,49 @@
-import { FormattedField } from 'components/FormattedField';
-import { forwardRef, useState } from 'react';
-import { SelectBottomSheet, Spacing } from 'tosslib';
+import { isNotNil } from 'es-toolkit';
+import { SelectBottomSheet, Spacing, TextField } from 'tosslib';
+import { Condition } from '../types';
+import { formatAmount } from '../utils/formatAmount';
 
-interface ConditionFormData {
-  targetAmount?: number;
-  monthlyAmount?: number;
-  term?: number;
+interface ConditionFormProps {
+  value: Condition;
+  onChange: (condition: Condition) => void;
 }
 
-interface FieldChangeEvent<T extends keyof ConditionFormData> {
-  name: T;
-  value: ConditionFormData[T];
-}
-
-interface ConditionFormProps<T extends keyof ConditionFormData> {
-  onFieldChange: (event: FieldChangeEvent<T>) => void;
-}
-
-export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof ConditionFormData>) {
-  const [terms, setTerms] = useState<number | undefined>();
-
+export function ConditionForm({ value, onChange }: ConditionFormProps) {
   return (
     <>
-      <AmountField
+      <TextField
         label="목표 금액"
         placeholder="목표 금액을 입력하세요"
         suffix="원"
-        onChange={value =>
-          onFieldChange({
-            name: 'targetAmount',
-            value,
-          })
-        }
+        value={isNotNil(value.targetAmount) ? formatAmount(value.targetAmount) : ''}
+        onChange={e => {
+          if (e.target.value === '') {
+            onChange({ ...value, targetAmount: undefined });
+          } else {
+            onChange({ ...value, targetAmount: Number(e.target.value.replace(/[^\d]/g, '')) });
+          }
+        }}
       />
       <Spacing size={16} />
-      <AmountField
+      <TextField
         label="월 납입액"
         placeholder="희망 월 납입액을 입력하세요"
         suffix="원"
-        onChange={value =>
-          onFieldChange({
-            name: 'monthlyAmount',
-            value,
-          })
-        }
+        value={value.monthlyAmount ? formatAmount(value.monthlyAmount) : ''}
+        onChange={e => {
+          if (e.target.value === '') {
+            onChange({ ...value, monthlyAmount: undefined });
+          } else {
+            onChange({ ...value, monthlyAmount: Number(e.target.value.replace(/[^\d]/g, '')) });
+          }
+        }}
       />
       <Spacing size={16} />
       <SelectBottomSheet<number>
         label="저축 기간"
         title="저축 기간을 선택해주세요"
-        value={terms}
-        onChange={term => {
-          setTerms(term);
-          onFieldChange({
-            name: 'term',
-            value: term,
-          });
-        }}
+        value={value.term}
+        onChange={term => onChange({ ...value, term })}
       >
         <SelectBottomSheet.Option value={6}>6개월</SelectBottomSheet.Option>
         <SelectBottomSheet.Option value={12}>12개월</SelectBottomSheet.Option>
@@ -65,31 +52,3 @@ export function ConditionForm({ onFieldChange }: ConditionFormProps<keyof Condit
     </>
   );
 }
-
-interface AmountFieldProps extends Omit<React.ComponentProps<typeof FormattedField>, 'onChange' | 'formatter'> {
-  onChange?: (value: number | undefined) => void;
-}
-
-const AmountField = forwardRef<HTMLInputElement, AmountFieldProps>(({ onChange, ...props }, ref) => {
-  return (
-    <FormattedField
-      ref={ref}
-      formatter={value =>
-        value
-          .replace(/[^\d]/g, '')
-          .replace(/^0+/, '')
-          .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-      }
-      onChange={value => {
-        if (!value) {
-          onChange?.(undefined);
-        } else {
-          onChange?.(Number(value.replace(/[^\d]/g, '')));
-        }
-      }}
-      {...props}
-    />
-  );
-});
-
-AmountField.displayName = 'AmountField';

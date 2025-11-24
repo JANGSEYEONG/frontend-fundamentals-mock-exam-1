@@ -11,7 +11,7 @@ export function SavingsCalculatorPage() {
   const [condition, setCondition] = useState<Condition>({
     targetAmount: undefined,
     monthlyAmount: undefined,
-    term: undefined,
+    term: 12,
     savingsProduct: undefined,
   });
 
@@ -21,7 +21,12 @@ export function SavingsCalculatorPage() {
 
       <Spacing size={16} />
 
-      <ConditionForm onFieldChange={({ name, value }) => setCondition(prev => ({ ...prev, [name]: value }))} />
+      <ConditionForm
+        value={condition}
+        onChange={condition => {
+          setCondition(condition);
+        }}
+      />
 
       <Spacing size={24} />
       <Border height={16} />
