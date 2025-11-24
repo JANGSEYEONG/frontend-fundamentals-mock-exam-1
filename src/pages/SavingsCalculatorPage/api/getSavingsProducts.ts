@@ -13,12 +13,3 @@ export const getSavingsProductsQueryOptions = () =>
     queryKey: ['savings-products'],
     queryFn: getSavingsProducts,
   });
-
-// // API 오류 캐치하기
-// try {
-//   await http.post(...);
-// } catch (e) {
-//   if (isHttpError(e)) {
-//     console.log(e.message);
-//   }
-// }

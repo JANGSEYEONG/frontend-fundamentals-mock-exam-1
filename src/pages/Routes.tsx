@@ -5,6 +5,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <SavingsCalculatorPage />,
+    errorElement: <div>알 수 없는 오류가 발생했어요</div>,
   },
   {
     path: '*',

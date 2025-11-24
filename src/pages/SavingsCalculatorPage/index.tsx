@@ -1,4 +1,3 @@
-import { Suspense } from '@suspensive/react';
 import { useState } from 'react';
 import { Assets, Border, ListHeader, NavigationBar, Spacing, Tab } from 'tosslib';
 import { CalculationResult } from './components/CalculationResult';
@@ -43,21 +42,19 @@ export function SavingsCalculatorPage() {
         switch (selectedTab) {
           case 'products':
             return (
-              <Suspense fallback={<ProductList.Fallback />}>
-                <ProductList
-                  filter={products =>
-                    products
-                      .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
-                      .filter(getAvailableTermsFilter(calculatedCondition.term))
-                  }
-                  renderRight={product =>
-                    calculatedCondition.savingsProduct?.id === product.id ? (
-                      <Assets.Icon name="icon-check-circle-green" />
-                    ) : null
-                  }
-                  onClick={product => setCalculatedCondition(prev => ({ ...prev, savingsProduct: product }))}
-                />
-              </Suspense>
+              <ProductList
+                select={savingsProducts =>
+                  savingsProducts
+                    .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
+                    .filter(getAvailableTermsFilter(calculatedCondition.term))
+                }
+                renderRight={savingsProdudct =>
+                  savingsProdudct.id === calculatedCondition.savingsProduct?.id ? (
+                    <Assets.Icon name="icon-check-circle-green" />
+                  ) : null
+                }
+                onClick={product => setCalculatedCondition(prev => ({ ...prev, savingsProduct: product }))}
+              />
             );
           case 'results':
             return (
@@ -69,22 +66,20 @@ export function SavingsCalculatorPage() {
                       title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
                     />
                     <Spacing size={12} />
-                    <Suspense fallback={<ProductList.Fallback />}>
-                      <ProductList
-                        filter={products =>
-                          products
-                            .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
-                            .filter(getAvailableTermsFilter(calculatedCondition.term))
-                            .sort((a, b) => b.annualRate - a.annualRate)
-                            .slice(0, 2)
-                        }
-                        renderRight={product =>
-                          calculatedCondition.savingsProduct?.id === product.id ? (
-                            <Assets.Icon name="icon-check-circle-green" />
-                          ) : null
-                        }
-                      />
-                    </Suspense>
+                    <ProductList
+                      select={savingsProducts =>
+                        savingsProducts
+                          .filter(getMonthlyAmountFilter(calculatedCondition.monthlyAmount))
+                          .filter(getAvailableTermsFilter(calculatedCondition.term))
+                          .sort((a, b) => b.annualRate - a.annualRate)
+                          .slice(0, 2)
+                      }
+                      renderRight={savingsProdudct =>
+                        savingsProdudct.id === calculatedCondition.savingsProduct?.id ? (
+                          <Assets.Icon name="icon-check-circle-green" />
+                        ) : null
+                      }
+                    />
                   </>
                 }
               />
