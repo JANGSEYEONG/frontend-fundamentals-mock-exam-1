@@ -2,6 +2,7 @@ import { isNotNil } from 'es-toolkit';
 import { SelectBottomSheet, Spacing, TextField } from 'tosslib';
 import { Condition } from '../types';
 import { formatAmount } from '../utils/formatAmount';
+import { ComponentProps } from 'react';
 
 interface ConditionFormProps {
   value: Condition;
@@ -11,31 +12,23 @@ interface ConditionFormProps {
 export function ConditionForm({ value, onChange }: ConditionFormProps) {
   return (
     <>
-      <TextField
+      <AmountField
         label="목표 금액"
         placeholder="목표 금액을 입력하세요"
         suffix="원"
-        value={isNotNil(value.targetAmount) ? formatAmount(value.targetAmount) : ''}
-        onChange={e => {
-          if (e.target.value === '') {
-            onChange({ ...value, targetAmount: undefined });
-          } else {
-            onChange({ ...value, targetAmount: Number(e.target.value.replace(/[^\d]/g, '')) });
-          }
+        value={value.targetAmount}
+        onChange={amount => {
+          onChange({ ...value, targetAmount: amount });
         }}
       />
       <Spacing size={16} />
-      <TextField
+      <AmountField
         label="월 납입액"
         placeholder="희망 월 납입액을 입력하세요"
         suffix="원"
-        value={value.monthlyAmount ? formatAmount(value.monthlyAmount) : ''}
-        onChange={e => {
-          if (e.target.value === '') {
-            onChange({ ...value, monthlyAmount: undefined });
-          } else {
-            onChange({ ...value, monthlyAmount: Number(e.target.value.replace(/[^\d]/g, '')) });
-          }
+        value={value.monthlyAmount}
+        onChange={amount => {
+          onChange({ ...value, monthlyAmount: amount });
         }}
       />
       <Spacing size={16} />
@@ -50,5 +43,27 @@ export function ConditionForm({ value, onChange }: ConditionFormProps) {
         <SelectBottomSheet.Option value={24}>24개월</SelectBottomSheet.Option>
       </SelectBottomSheet>
     </>
+  );
+}
+
+interface AmountFieldProps extends Omit<ComponentProps<typeof TextField>, 'value' | 'onChange'> {
+  value?: number;
+  onChange?: (amount?: number) => void;
+}
+
+function AmountField({ value, onChange, ...props }: AmountFieldProps) {
+  return (
+    <TextField
+      value={isNotNil(value) ? formatAmount(value) : ''}
+      onChange={e => {
+        if (e.target.value === '') {
+          onChange?.(undefined);
+          return;
+        } else {
+          onChange?.(Number(e.target.value.replace(/[^\d]/g, '')));
+        }
+      }}
+      {...props}
+    />
   );
 }
