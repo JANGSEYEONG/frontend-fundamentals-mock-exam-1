@@ -1,8 +1,8 @@
 import { isNotNil } from 'es-toolkit';
+import { ComponentProps } from 'react';
 import { SelectBottomSheet, Spacing, TextField } from 'tosslib';
 import { Condition } from '../types';
 import { formatAmount } from '../utils/formatAmount';
-import { ComponentProps } from 'react';
 
 interface ConditionFormProps {
   value: Condition;
@@ -32,20 +32,17 @@ export function ConditionForm({ value, onChange }: ConditionFormProps) {
         }}
       />
       <Spacing size={16} />
-      <SelectBottomSheet<number>
+      <SavingsTermField
         label="저축 기간"
-        title="저축 기간을 선택해주세요"
+        placeholder="저축 기간을 선택해주세요"
         value={value.term}
-        onChange={term => onChange({ ...value, term })}
-      >
-        <SelectBottomSheet.Option value={6}>6개월</SelectBottomSheet.Option>
-        <SelectBottomSheet.Option value={12}>12개월</SelectBottomSheet.Option>
-        <SelectBottomSheet.Option value={24}>24개월</SelectBottomSheet.Option>
-      </SelectBottomSheet>
+        onChange={term => {
+          onChange({ ...value, term });
+        }}
+      />
     </>
   );
 }
-
 interface AmountFieldProps extends Omit<ComponentProps<typeof TextField>, 'value' | 'onChange'> {
   value?: number;
   onChange?: (amount?: number) => void;
@@ -57,7 +54,7 @@ function AmountField({ value, onChange, ...props }: AmountFieldProps) {
       value={isNotNil(value) ? formatAmount(value) : ''}
       onChange={e => {
         if (e.target.value === '') {
-          onChange?.(undefined);
+          onChange?.();
           return;
         } else {
           onChange?.(Number(e.target.value.replace(/[^\d]/g, '')));
@@ -65,5 +62,21 @@ function AmountField({ value, onChange, ...props }: AmountFieldProps) {
       }}
       {...props}
     />
+  );
+}
+
+interface SavingsTermFieldProps {
+  label?: string;
+  placeholder: string;
+  value?: number;
+  onChange: (term: number) => void;
+}
+function SavingsTermField({ label, placeholder, value, onChange }: SavingsTermFieldProps) {
+  return (
+    <SelectBottomSheet<number> label={label} title={placeholder} value={value} onChange={onChange}>
+      <SelectBottomSheet.Option value={6}>6개월</SelectBottomSheet.Option>
+      <SelectBottomSheet.Option value={12}>12개월</SelectBottomSheet.Option>
+      <SelectBottomSheet.Option value={24}>24개월</SelectBottomSheet.Option>
+    </SelectBottomSheet>
   );
 }
