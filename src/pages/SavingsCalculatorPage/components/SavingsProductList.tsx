@@ -4,13 +4,16 @@ import { colors, isHttpError, ListRow } from 'tosslib';
 import { getSavingsProductsQueryOptions } from '../api/getSavingsProducts';
 import { SavingsProduct } from '../types';
 import { formatAmount } from '../utils/formatAmount';
+import { FilterCondition, OrderByCondition } from 'types';
 
 interface SavingsProductListProps {
-  select?: (data: SavingsProduct[]) => SavingsProduct[];
+  filter?: Array<FilterCondition<SavingsProduct>>;
+  orderBy?: Array<OrderByCondition<SavingsProduct>>;
+  limit?: number;
   renderRight?: (savingsProdudct: SavingsProduct) => React.ReactNode;
   onClick?: (savingsProdudct: SavingsProduct) => void;
 }
-export function SavingsProductList({ select, renderRight, onClick }: SavingsProductListProps) {
+export function SavingsProductList({ filter, orderBy, limit, renderRight, onClick }: SavingsProductListProps) {
   return (
     <ErrorBoundary
       shouldCatch={isHttpError}
@@ -21,7 +24,7 @@ export function SavingsProductList({ select, renderRight, onClick }: SavingsProd
       <Suspense
         fallback={<ListRow contents={<ListRow.Texts type="1RowTypeA" top="적금 상품을 불러오는 중이에요." />} />}
       >
-        <SuspenseQuery {...getSavingsProductsQueryOptions()} select={select}>
+        <SuspenseQuery {...getSavingsProductsQueryOptions({ filter, orderBy, limit })}>
           {({ data: savingsProducts }) => {
             if (savingsProducts.length === 0) {
               return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="조건에 맞는 적금 상품이 없어요." />} />;

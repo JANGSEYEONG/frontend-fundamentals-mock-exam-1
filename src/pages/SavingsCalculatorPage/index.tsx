@@ -76,11 +76,11 @@ export function SavingsCalculatorPage() {
           case 'products':
             return (
               <SavingsProductList
-                select={savingsProducts =>
-                  savingsProducts
-                    .filter(getMonthlyAmountFilter(condition.monthlyAmount))
-                    .filter(getAvailableTermsFilter(condition.term))
-                }
+                filter={[
+                  { field: 'minMonthlyAmount', operator: 'lte', value: condition.monthlyAmount },
+                  { field: 'maxMonthlyAmount', operator: 'gte', value: condition.monthlyAmount },
+                  { field: 'availableTerms', operator: 'eq', value: condition.term },
+                ]}
                 renderRight={savingsProdudct =>
                   savingsProdudct.id === selectedProduct?.id ? <Assets.Icon name="icon-check-circle-green" /> : null
                 }
@@ -101,13 +101,13 @@ export function SavingsCalculatorPage() {
                 />
                 <Spacing size={12} />
                 <SavingsProductList
-                  select={savingsProducts =>
-                    savingsProducts
-                      .filter(getMonthlyAmountFilter(condition.monthlyAmount))
-                      .filter(getAvailableTermsFilter(condition.term))
-                      .sort((a, b) => b.annualRate - a.annualRate)
-                      .slice(0, 2)
-                  }
+                  filter={[
+                    { field: 'minMonthlyAmount', operator: 'lte', value: condition.monthlyAmount },
+                    { field: 'maxMonthlyAmount', operator: 'gte', value: condition.monthlyAmount },
+                    { field: 'availableTerms', operator: 'eq', value: condition.term },
+                  ]}
+                  orderBy={[{ field: 'annualRate', direction: 'desc' }]}
+                  limit={2}
                   renderRight={savingsProdudct =>
                     savingsProdudct.id === selectedProduct?.id ? <Assets.Icon name="icon-check-circle-green" /> : null
                   }
@@ -125,22 +125,4 @@ export function SavingsCalculatorPage() {
       <Spacing size={8} />
     </>
   );
-}
-
-function getMonthlyAmountFilter(monthlyAmount?: number): (savingsProduct: SavingsProduct) => boolean {
-  return savingsProduct => {
-    if (monthlyAmount === undefined) {
-      return true;
-    }
-    return monthlyAmount >= savingsProduct.minMonthlyAmount && monthlyAmount <= savingsProduct.maxMonthlyAmount;
-  };
-}
-
-function getAvailableTermsFilter(term?: number): (savingsProduct: SavingsProduct) => boolean {
-  return savingsProduct => {
-    if (term === undefined) {
-      return true;
-    }
-    return term === savingsProduct.availableTerms;
-  };
 }
