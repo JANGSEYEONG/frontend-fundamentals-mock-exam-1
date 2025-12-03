@@ -1,10 +1,19 @@
+type Curreny = 'KRW';
+
 export const formatAmount = (
   value: number,
   options: {
-    locales?: Intl.LocalesArgument;
+    currency: Curreny;
   } = {
-    locales: 'ko-KR',
+    currency: 'KRW',
   }
 ) => {
-  return value.toLocaleString(options.locales);
+  switch (options.currency) {
+    case 'KRW':
+      return value.toLocaleString('ko-KR');
+
+    default:
+      options.currency satisfies never;
+      throw new Error(`Unsupported currency: ${options.currency}`);
+  }
 };
