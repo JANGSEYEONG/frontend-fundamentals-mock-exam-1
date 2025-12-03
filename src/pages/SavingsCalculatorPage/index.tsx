@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Assets, Border, ListHeader, NavigationBar, Spacing, Tab } from 'tosslib';
+import { AmountField } from './components/AmountField';
 import { CalculationResult } from './components/CalculationResult';
-import { ConditionForm } from './components/ConditionForm';
 import { SavingsProductList } from './components/SavingsProductList';
+import { SavingsTermField } from './components/SavingsTermField';
 import { Condition, SavingsProduct } from './types';
 
+type SavingsView = 'products' | 'results';
+
 export function SavingsCalculatorPage() {
-  const [selectedTab, setSelectedTab] = useState('products');
+  const [view, setView] = useState<SavingsView>('products');
 
   const [condition, setCondition] = useState<Condition>({
     targetAmount: undefined,
@@ -21,10 +24,32 @@ export function SavingsCalculatorPage() {
 
       <Spacing size={16} />
 
-      <ConditionForm
-        value={condition}
-        onChange={condition => {
-          setCondition(condition);
+      <AmountField
+        label="목표 금액"
+        placeholder="목표 금액을 입력하세요"
+        suffix="원"
+        value={condition.targetAmount}
+        onChange={targetAmount => {
+          setCondition(prev => ({ ...prev, targetAmount }));
+        }}
+      />
+      <Spacing size={16} />
+      <AmountField
+        label="월 납입액"
+        placeholder="희망 월 납입액을 입력하세요"
+        suffix="원"
+        value={condition.monthlyAmount}
+        onChange={monthlyAmount => {
+          setCondition(prev => ({ ...prev, monthlyAmount }));
+        }}
+      />
+      <Spacing size={16} />
+      <SavingsTermField
+        label="저축 기간"
+        placeholder="저축 기간을 선택해주세요"
+        value={condition.term}
+        onChange={term => {
+          setCondition(prev => ({ ...prev, term }));
         }}
       />
 
@@ -32,17 +57,17 @@ export function SavingsCalculatorPage() {
       <Border height={16} />
       <Spacing size={8} />
 
-      <Tab onChange={value => setSelectedTab(value)}>
-        <Tab.Item value="products" selected={selectedTab === 'products'}>
+      <Tab onChange={value => setView(value as SavingsView)}>
+        <Tab.Item value="products" selected={view === 'products'}>
           적금 상품
         </Tab.Item>
-        <Tab.Item value="results" selected={selectedTab === 'results'}>
+        <Tab.Item value="results" selected={view === 'results'}>
           계산 결과
         </Tab.Item>
       </Tab>
 
       {(() => {
-        switch (selectedTab) {
+        switch (view) {
           case 'products':
             return (
               <SavingsProductList
@@ -88,6 +113,7 @@ export function SavingsCalculatorPage() {
               />
             );
           default:
+            view satisfies never;
             throw new Error('The tab does not exist');
         }
       })()}
