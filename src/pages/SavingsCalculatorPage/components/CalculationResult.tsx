@@ -1,14 +1,13 @@
 import { isNil, isNotNil } from 'es-toolkit';
-import { Border, colors, ListRow, Spacing } from 'tosslib';
+import { colors, ListRow } from 'tosslib';
 import { Condition } from '../types';
 import { formatAmount } from '../utils/formatAmount';
 
 interface CalculationResultProps {
   condition: Condition;
-  extra?: React.ReactNode;
 }
 
-export function CalculationResult({ condition, extra }: CalculationResultProps) {
+export function CalculationResult({ condition }: CalculationResultProps) {
   if (!checkRequiredCondition(condition)) {
     if (isNil(condition.savingsProduct)) {
       return <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} />;
@@ -51,17 +50,6 @@ export function CalculationResult({ condition, extra }: CalculationResultProps) 
           />
         }
       />
-      {extra && (
-        <>
-          <Spacing size={8} />
-          <Border height={16} />
-          <Spacing size={8} />
-
-          {extra}
-
-          <Spacing size={40} />
-        </>
-      )}
     </>
   );
 }

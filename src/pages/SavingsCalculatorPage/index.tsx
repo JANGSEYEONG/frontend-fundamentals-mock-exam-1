@@ -86,31 +86,34 @@ export function SavingsCalculatorPage() {
             );
           case 'results':
             return (
-              <CalculationResult
-                condition={condition}
-                extra={
-                  <>
-                    <ListHeader
-                      title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
-                    />
-                    <Spacing size={12} />
-                    <SavingsProductList
-                      select={savingsProducts =>
-                        savingsProducts
-                          .filter(getMonthlyAmountFilter(condition.monthlyAmount))
-                          .filter(getAvailableTermsFilter(condition.term))
-                          .sort((a, b) => b.annualRate - a.annualRate)
-                          .slice(0, 2)
-                      }
-                      renderRight={savingsProdudct =>
-                        savingsProdudct.id === condition.savingsProduct?.id ? (
-                          <Assets.Icon name="icon-check-circle-green" />
-                        ) : null
-                      }
-                    />
-                  </>
-                }
-              />
+              <>
+                <CalculationResult condition={condition} />
+
+                <Spacing size={8} />
+                <Border height={16} />
+                <Spacing size={8} />
+
+                <ListHeader
+                  title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
+                />
+                <Spacing size={12} />
+                <SavingsProductList
+                  select={savingsProducts =>
+                    savingsProducts
+                      .filter(getMonthlyAmountFilter(condition.monthlyAmount))
+                      .filter(getAvailableTermsFilter(condition.term))
+                      .sort((a, b) => b.annualRate - a.annualRate)
+                      .slice(0, 2)
+                  }
+                  renderRight={savingsProdudct =>
+                    savingsProdudct.id === condition.savingsProduct?.id ? (
+                      <Assets.Icon name="icon-check-circle-green" />
+                    ) : null
+                  }
+                />
+
+                <Spacing size={40} />
+              </>
             );
           default:
             view satisfies never;
