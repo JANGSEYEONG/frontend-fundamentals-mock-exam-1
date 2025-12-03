@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import { Assets, Border, ListHeader, NavigationBar, Spacing, Tab } from 'tosslib';
+import { AmountField } from './components/AmountField';
 import { CalculationResult } from './components/CalculationResult';
-import { ConditionForm } from './components/ConditionForm';
 import { SavingsProductList } from './components/SavingsProductList';
-import { Condition, SavingsProduct } from './types';
+import { SavingsTermField } from './components/SavingsTermField';
+import { SavingsCondition, SavingsProduct } from './types';
+
+const SAVINGS_VIEW = {
+  PRODUCTS: 'products',
+  RESULTS: 'results',
+} as const;
+
+type SavingsView = (typeof SAVINGS_VIEW)[keyof typeof SAVINGS_VIEW];
 
 export function SavingsCalculatorPage() {
-  const [selectedTab, setSelectedTab] = useState('products');
+  const [view, setView] = useState<SavingsView>(SAVINGS_VIEW.PRODUCTS);
 
-  const [condition, setCondition] = useState<Condition>({
+  const [selectedProduct, setSelectedProduct] = useState<SavingsProduct | undefined>(undefined);
+  const [condition, setCondition] = useState<SavingsCondition>({
     targetAmount: undefined,
     monthlyAmount: undefined,
     term: 12,
-    savingsProduct: undefined,
   });
 
   return (
@@ -21,10 +29,32 @@ export function SavingsCalculatorPage() {
 
       <Spacing size={16} />
 
-      <ConditionForm
-        value={condition}
-        onChange={condition => {
-          setCondition(condition);
+      <AmountField
+        label="목표 금액"
+        placeholder="목표 금액을 입력하세요"
+        suffix="원"
+        value={condition.targetAmount}
+        onChange={targetAmount => {
+          setCondition(prev => ({ ...prev, targetAmount }));
+        }}
+      />
+      <Spacing size={16} />
+      <AmountField
+        label="월 납입액"
+        placeholder="희망 월 납입액을 입력하세요"
+        suffix="원"
+        value={condition.monthlyAmount}
+        onChange={monthlyAmount => {
+          setCondition(prev => ({ ...prev, monthlyAmount }));
+        }}
+      />
+      <Spacing size={16} />
+      <SavingsTermField
+        label="저축 기간"
+        placeholder="저축 기간을 선택해주세요"
+        value={condition.term}
+        onChange={term => {
+          setCondition(prev => ({ ...prev, term }));
         }}
       />
 
@@ -32,62 +62,62 @@ export function SavingsCalculatorPage() {
       <Border height={16} />
       <Spacing size={8} />
 
-      <Tab onChange={value => setSelectedTab(value)}>
-        <Tab.Item value="products" selected={selectedTab === 'products'}>
+      <Tab onChange={value => setView(value as SavingsView)}>
+        <Tab.Item value={SAVINGS_VIEW.PRODUCTS} selected={view === SAVINGS_VIEW.PRODUCTS}>
           적금 상품
         </Tab.Item>
-        <Tab.Item value="results" selected={selectedTab === 'results'}>
+        <Tab.Item value={SAVINGS_VIEW.RESULTS} selected={view === SAVINGS_VIEW.RESULTS}>
           계산 결과
         </Tab.Item>
       </Tab>
 
       {(() => {
-        switch (selectedTab) {
+        switch (view) {
           case 'products':
             return (
               <SavingsProductList
-                select={savingsProducts =>
-                  savingsProducts
-                    .filter(getMonthlyAmountFilter(condition.monthlyAmount))
-                    .filter(getAvailableTermsFilter(condition.term))
-                }
+                filter={[
+                  { field: 'minMonthlyAmount', operator: 'lte', value: condition.monthlyAmount },
+                  { field: 'maxMonthlyAmount', operator: 'gte', value: condition.monthlyAmount },
+                  { field: 'availableTerms', operator: 'eq', value: condition.term },
+                ]}
                 renderRight={savingsProdudct =>
-                  savingsProdudct.id === condition.savingsProduct?.id ? (
-                    <Assets.Icon name="icon-check-circle-green" />
-                  ) : null
+                  savingsProdudct.id === selectedProduct?.id ? <Assets.Icon name="icon-check-circle-green" /> : null
                 }
-                onClick={product => setCondition(prev => ({ ...prev, savingsProduct: product }))}
+                onClick={product => setSelectedProduct(product)}
               />
             );
           case 'results':
             return (
-              <CalculationResult
-                condition={condition}
-                extra={
-                  <>
-                    <ListHeader
-                      title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
-                    />
-                    <Spacing size={12} />
-                    <SavingsProductList
-                      select={savingsProducts =>
-                        savingsProducts
-                          .filter(getMonthlyAmountFilter(condition.monthlyAmount))
-                          .filter(getAvailableTermsFilter(condition.term))
-                          .sort((a, b) => b.annualRate - a.annualRate)
-                          .slice(0, 2)
-                      }
-                      renderRight={savingsProdudct =>
-                        savingsProdudct.id === condition.savingsProduct?.id ? (
-                          <Assets.Icon name="icon-check-circle-green" />
-                        ) : null
-                      }
-                    />
-                  </>
-                }
-              />
+              <>
+                <CalculationResult savingsProduct={selectedProduct} savingsCondition={condition} />
+
+                <Spacing size={8} />
+                <Border height={16} />
+                <Spacing size={8} />
+
+                <ListHeader
+                  title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>}
+                />
+                <Spacing size={12} />
+                <SavingsProductList
+                  filter={[
+                    { field: 'minMonthlyAmount', operator: 'lte', value: condition.monthlyAmount },
+                    { field: 'maxMonthlyAmount', operator: 'gte', value: condition.monthlyAmount },
+                    { field: 'availableTerms', operator: 'eq', value: condition.term },
+                  ]}
+                  orderBy={[{ field: 'annualRate', direction: 'desc' }]}
+                  limit={2}
+                  renderRight={savingsProdudct =>
+                    savingsProdudct.id === selectedProduct?.id ? <Assets.Icon name="icon-check-circle-green" /> : null
+                  }
+                />
+
+                <Spacing size={40} />
+              </>
             );
           default:
+            view satisfies never;
             throw new Error('The tab does not exist');
         }
       })()}
@@ -95,22 +125,4 @@ export function SavingsCalculatorPage() {
       <Spacing size={8} />
     </>
   );
-}
-
-function getMonthlyAmountFilter(monthlyAmount?: number): (savingsProduct: SavingsProduct) => boolean {
-  return savingsProduct => {
-    if (monthlyAmount === undefined) {
-      return true;
-    }
-    return monthlyAmount >= savingsProduct.minMonthlyAmount && monthlyAmount <= savingsProduct.maxMonthlyAmount;
-  };
-}
-
-function getAvailableTermsFilter(term?: number): (savingsProduct: SavingsProduct) => boolean {
-  return savingsProduct => {
-    if (term === undefined) {
-      return true;
-    }
-    return term === savingsProduct.availableTerms;
-  };
 }
