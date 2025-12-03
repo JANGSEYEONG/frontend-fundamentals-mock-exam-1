@@ -4,18 +4,23 @@ import { AmountField } from './components/AmountField';
 import { CalculationResult } from './components/CalculationResult';
 import { SavingsProductList } from './components/SavingsProductList';
 import { SavingsTermField } from './components/SavingsTermField';
-import { Condition, SavingsProduct } from './types';
+import { SavingsCondition, SavingsProduct } from './types';
 
-type SavingsView = 'products' | 'results';
+const SAVINGS_VIEW = {
+  PRODUCTS: 'products',
+  RESULTS: 'results',
+} as const;
+
+type SavingsView = (typeof SAVINGS_VIEW)[keyof typeof SAVINGS_VIEW];
 
 export function SavingsCalculatorPage() {
-  const [view, setView] = useState<SavingsView>('products');
+  const [view, setView] = useState<SavingsView>(SAVINGS_VIEW.PRODUCTS);
 
-  const [condition, setCondition] = useState<Condition>({
+  const [selectedProduct, setSelectedProduct] = useState<SavingsProduct | undefined>(undefined);
+  const [condition, setCondition] = useState<SavingsCondition>({
     targetAmount: undefined,
     monthlyAmount: undefined,
     term: 12,
-    savingsProduct: undefined,
   });
 
   return (
@@ -58,10 +63,10 @@ export function SavingsCalculatorPage() {
       <Spacing size={8} />
 
       <Tab onChange={value => setView(value as SavingsView)}>
-        <Tab.Item value="products" selected={view === 'products'}>
+        <Tab.Item value={SAVINGS_VIEW.PRODUCTS} selected={view === SAVINGS_VIEW.PRODUCTS}>
           적금 상품
         </Tab.Item>
-        <Tab.Item value="results" selected={view === 'results'}>
+        <Tab.Item value={SAVINGS_VIEW.RESULTS} selected={view === SAVINGS_VIEW.RESULTS}>
           계산 결과
         </Tab.Item>
       </Tab>
@@ -77,17 +82,15 @@ export function SavingsCalculatorPage() {
                     .filter(getAvailableTermsFilter(condition.term))
                 }
                 renderRight={savingsProdudct =>
-                  savingsProdudct.id === condition.savingsProduct?.id ? (
-                    <Assets.Icon name="icon-check-circle-green" />
-                  ) : null
+                  savingsProdudct.id === selectedProduct?.id ? <Assets.Icon name="icon-check-circle-green" /> : null
                 }
-                onClick={product => setCondition(prev => ({ ...prev, savingsProduct: product }))}
+                onClick={product => setSelectedProduct(product)}
               />
             );
           case 'results':
             return (
               <>
-                <CalculationResult condition={condition} />
+                <CalculationResult savingsProduct={selectedProduct} savingsCondition={condition} />
 
                 <Spacing size={8} />
                 <Border height={16} />
@@ -106,9 +109,7 @@ export function SavingsCalculatorPage() {
                       .slice(0, 2)
                   }
                   renderRight={savingsProdudct =>
-                    savingsProdudct.id === condition.savingsProduct?.id ? (
-                      <Assets.Icon name="icon-check-circle-green" />
-                    ) : null
+                    savingsProdudct.id === selectedProduct?.id ? <Assets.Icon name="icon-check-circle-green" /> : null
                   }
                 />
 

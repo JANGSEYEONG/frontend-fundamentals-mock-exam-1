@@ -1,8 +1,7 @@
-export interface Condition {
+export interface SavingsCondition {
   targetAmount?: number;
   monthlyAmount?: number;
   term?: number;
-  savingsProduct?: SavingsProduct;
 }
 
 export interface SavingsProduct {
